@@ -90,7 +90,7 @@ class Enemy(Player):
             self.animations[animation] = import_folder(full_path)
 
     def chase(self):
-        steps = A.Astar(self.chasemap, ground(self.rect.x//self.cellx), self.rect.y//self.celly-1, self.playerpos.x//self.cellx-1, self.playerpos.y//self.celly-1)
+        steps = A.Astar(self.chasemap, (self.rect.x//self.cellx), self.rect.y//self.celly-1, self.playerpos.x//self.cellx-1, self.playerpos.y//self.celly-1)
         directions = A.getDirection(steps)
         print(directions)
         size = len(directions)
