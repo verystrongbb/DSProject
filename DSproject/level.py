@@ -1,12 +1,15 @@
 import random
-
 import pygame
+
+import settings
 from settings import *
 from player import Player
 from enemy import Enemy
 from mapeditor import myMap
+from medicine import Medicine
 
-n = 10  # number of enemies
+n = 20  # number of enemies
+m = 5  # number of medicine
 
 
 class Level:
@@ -15,10 +18,12 @@ class Level:
         self.display_surface = pygame.display.get_surface()
         # sprite groups
         self.enemy_sprites = pygame.sprite.Group()
-        self.temp = pygame.sprite.Group()
+        self.temp_enemy = pygame.sprite.Group()
         self.play_sprites = pygame.sprite.Group()
         self.all_sprites = pygame.sprite.Group()
         self.map = myMap(self.display_surface, self.all_sprites)
+        self.medicine_sprites = pygame.sprite.Group()
+        self.temp_medicine = pygame.sprite.Group()
         # setup
         self.curRoom = [0, 0]
         self.RR = self.map.getRoomRC()[0]
@@ -36,20 +41,26 @@ class Level:
         playerpos = self.player.getpos()
 
         ####移除不在该房间的enemy 用temp保存 下次回来时调用
-        for sp in self.temp:
+        for sp in self.temp_enemy:
             self.enemy_sprites.add(sp)
         for sp in self.enemy_sprites:
-            if sp.roomNO[0] != self.curRoom[0] or sp.roomNO[1]!=self.curRoom[1]:
+            if sp.roomNO[0] != self.curRoom[0] or sp.roomNO[1] != self.curRoom[1]:
                 self.enemy_sprites.remove(sp)
-                self.temp.add(sp)
+                self.temp_enemy.add(sp)
 
-        for sp in self.enemy_sprites:
-            print(sp.pos_vector,sp.HP)
+        for sp in self.temp_medicine:
+            self.medicine_sprites.add(sp)
+        for sp in self.medicine_sprites:
+            if sp.roomNO[0] != self.curRoom[0] or sp.roomNO[1] != self.curRoom[1]:
+                self.medicine_sprites.remove(sp)
+                self.temp_medicine.add(sp)
+
+        # for sp in self.enemy_sprites:
+        #     print(sp.pos_vector,sp.HP)
         self.enemy_sprites.draw(self.display_surface)
         self.play_sprites.draw(self.display_surface)
+        self.medicine_sprites.draw(self.display_surface)
         #####draw Enemy
-
-
 
         ###generate new enemies
         if self.isShift == 1:
@@ -61,6 +72,7 @@ class Level:
         self.all_sprites.update(dt)
         self.play_sprites.update(dt)
         self.enemy_sprites.update(dt)
+        self.medicine_sprites.update(dt)
         # self.enemy_sprites.update(dt)
         # enemy gets player's position
         for sp in self.enemy_sprites:
@@ -71,6 +83,16 @@ class Level:
         for sp in self.enemy_sprites:
             if sp.HP < 0:
                 sp.kill()
+
+        for medicine_sprite in self.medicine_sprites:
+            if self.player.rect.colliderect(medicine_sprite):
+                self.player.inventory['medicine'] += 1
+
+                # delete medicine
+                medicine_sprite.kill()
+                print(self.player.inventory)
+                print('HP: ', self.player.HP)
+                break
 
     def shiftRoom(self):
         ##情况比较多 用树考虑比较好？
@@ -123,9 +145,14 @@ class Level:
         self.player = Player(self.Player_birth, movepath, self.play_sprites, self.map.getBlock(), self.map.getTrap())
         self.player.setDisplaySur(self.display_surface)
         for i in range(0, n):
-            roomNO=[random.randint(0,self.RR-1),random.randint(0, self.RC-1)]
+            roomNO = [random.randint(0, self.RR - 1), random.randint(0, self.RC - 1)]
             pos = self.map.getRoomBirthPos(roomNO)
             globals()['self.enemy' + str(i)] = Enemy(pos, self.player.getpos(), movepath,
-                                                     self.enemy_sprites, self.map.getBlock(), self.map.getTrap())
-            globals()['self.enemy' + str(i)].roomNO=roomNO
-
+                                                     self.enemy_sprites, self.map.getBlock(), self.map.getTrap(),
+                                                     self.map)
+            globals()['self.enemy' + str(i)].roomNO = roomNO
+        for i in range(0, m):
+            roomNO = [random.randint(0, self.RR - 1), random.randint(0, self.RC - 1)]
+            pos = self.map.getRoomBirthPos(roomNO)
+            globals()['self.medicine' + str(i)] = Medicine(roomNO, pos)
+            globals()['self.medicine' + str(i)].create_medicine_tile(self.medicine_sprites)

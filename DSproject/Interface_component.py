@@ -8,6 +8,9 @@ choose_sound = pygame.mixer.Sound("sound/y1650.wav")
 choose_sound.set_volume(Sound.hit_volume)
 hit1_sound = pygame.mixer.Sound("sound/hit.wav")
 hit1_sound.set_volume(Sound.hit_volume)
+magic_sound = pygame.mixer.Sound("sound/magic_sound.wav")
+magic_sound.set_volume(Sound.hit_volume)
+
 
 class Color:
     # 自定义颜色
@@ -22,6 +25,8 @@ class Color:
     BLUE = (0, 0, 255)
     GREY = (128, 128, 128)  # 中性灰
     TRANSPARENT = (255, 255, 255, 0)  # 白色的完全透明
+    Doder_blue = "#1E90FF"
+    light_grey = "#DCDCDC"
 
 
 class Text:
@@ -122,6 +127,7 @@ class ButtonImage(Image):
 
 class ButtonColorSurface(ColorSurface):
     number = 1
+
     def __init__(self, color, width, height):
         super().__init__(color, width, height)
         self.rect = self.color_image.get_rect()
@@ -137,5 +143,3 @@ class ButtonColorSurface(ColorSurface):
             choose_sound.play()
             ButtonColorSurface.number = 2
             command(*args)
-
-

@@ -4,11 +4,14 @@ import pygame.mixer
 
 from settings import *
 from level import Level
+
 from Interface_component import *
 from sound import *
+from player import Player
 
 
 class InterFace:
+    gameover = False
 
     def __init__(self):
 
@@ -32,8 +35,8 @@ class InterFace:
         self.hit_volume = 0.4
 
         pygame.mixer.init()
-        pygame.mixer.music.load('music/0.mp3')
 
+        pygame.mixer.music.load('music/4.mp3')
         pygame.mixer.music.set_volume(self.bg_volume)
         pygame.mixer.music.play(-1, 0)
 
@@ -59,6 +62,13 @@ class InterFace:
         <开始界面><start_interface>
         """
         # 设置<基本背景>
+        print("Interface.gameover")
+        print(InterFace.gameover)
+
+        InterFace.gameover = False
+        Player.HP = 100
+        Player.MP = 100
+
         size, screen = self.basic_background()
         width, height = size
         pygame.mixer.music.set_volume(self.bg_volume)
@@ -70,6 +80,8 @@ class InterFace:
         ButtonColorSurface.number = 1
 
         while True:
+            # print("HP")
+            # print(Player.HP)
             Image('bg3.jpg', 0.6).draw(screen, width / 2, height / 2)
             Image('achievement_icon.png', ratio=0.3).draw(screen, width * 0.93, height * 0.05)  # 成就按钮
 
@@ -88,9 +100,9 @@ class InterFace:
             hover_image = Image('ink.png', ratio=0.35)
             hover_image.set_alpha(100)
 
-            if (start_hover):
+            if start_hover:
                 hover_image.draw(screen, width / 2, height * 0.55)
-            if (option_hover):
+            if option_hover:
                 hover_image.draw(screen, width / 2, height * 0.65)
 
             for event in pygame.event.get():
@@ -106,7 +118,10 @@ class InterFace:
             pygame.display.update()
 
     def initial_attribute_interface(self):
+        pygame.mixer.music.load('music/2.mp3')
         pygame.mixer.music.set_volume(0.8 * self.bg_volume)
+        pygame.mixer.music.play(-1, 0)
+
         pygame.display.set_caption('Dungeon Tour')
         ButtonColorSurface.number = 1
         while True:
@@ -118,18 +133,49 @@ class InterFace:
                     button_back.handle_event(self.start_interface)
                     button_setting.handle_event(self.option_interface)
 
-            dt = self.clock.tick() / 1000
-            print(hit1_sound.get_volume())
-            self.level.run(dt)
-            Image('返回.png', ratio=0.38).draw(self.screen, SCREEN_WIDTH * 0.04, SCREEN_HEIGHT * 0.047)
-            button_back = ButtonColorSurface(Color.TRANSPARENT, 26, 26)
-            button_back.draw(self.screen, SCREEN_WIDTH * 0.04, SCREEN_HEIGHT * 0.047)
+            if self.level.player.HP <= 0:
+                self.game_over_interface()
+            else:
+                dt = self.clock.tick() / 1000
+                # print(hit1_sound.get_volume())
+                self.level.run(dt)
+                Image('返回.png', ratio=0.38).draw(self.screen, SCREEN_WIDTH * 0.04, SCREEN_HEIGHT * 0.047)
+                button_back = ButtonColorSurface(Color.TRANSPARENT, 26, 26)
+                button_back.draw(self.screen, SCREEN_WIDTH * 0.04, SCREEN_HEIGHT * 0.047)
 
-            Image('setting1.png', ratio=0.22).draw(self.screen, SCREEN_WIDTH * 0.09, SCREEN_HEIGHT * 0.048)
-            button_setting = ButtonColorSurface(Color.TRANSPARENT, 26, 26)
-            button_setting.draw(self.screen, SCREEN_WIDTH * 0.09, SCREEN_HEIGHT * 0.048)
+                Image('setting1.png', ratio=0.22).draw(self.screen, SCREEN_WIDTH * 0.09, SCREEN_HEIGHT * 0.048)
+                button_setting = ButtonColorSurface(Color.TRANSPARENT, 26, 26)
+                button_setting.draw(self.screen, SCREEN_WIDTH * 0.09, SCREEN_HEIGHT * 0.048)
+
+                button_game_over = ButtonText('', Color.BLACK, 'aajht.ttf', 50)  # 开始游戏按钮
+                self.lifebar_draw()
+                self.magic_draw()
 
             pygame.display.update()
+
+    def lifebar_draw(self):
+        left = 60
+        top = 630
+        width = 240
+        height = 30
+
+        outline_rect = pygame.Rect(left, top, width, height)
+        pygame.draw.rect(self.screen, Color.WHITE, outline_rect, 1)
+        life_rect = pygame.Rect(left + 1, top + 1, self.level.player.HP / 100.0 * width, height * 0.93)
+        pygame.draw.rect(self.screen, Color.RED, life_rect)
+        Text('HP', Color.RED, 'xxyl.ttf', 38).draw(self.screen, SCREEN_WIDTH * 0.04, SCREEN_HEIGHT * 0.92)
+
+    def magic_draw(self):
+        left = 400
+        top = 630
+        width = 240
+        height = 30
+
+        outline_rect = pygame.Rect(left, top, width, height)
+        pygame.draw.rect(self.screen, Color.WHITE, outline_rect, 1)
+        life_rect = pygame.Rect(left + 1, top + 1, self.level.player.MP / 100.0 * width, height * 0.93)
+        pygame.draw.rect(self.screen, Color.Doder_blue, life_rect)
+        Text('MP', Color.Doder_blue, 'xxyl.ttf', 38).draw(self.screen, SCREEN_WIDTH * 0.41, SCREEN_HEIGHT * 0.92)
 
     def option_background(self):
 
@@ -248,6 +294,43 @@ class InterFace:
                 choose_sound.set_volume(Sound.hit_volume)
                 hit1_sound.set_volume(Sound.hit_volume)
                 print(hit1_sound.get_volume())
+            pygame.display.update()
+
+    def game_over_interface(self):
+        Player.HP = 100
+        Player.MP = 100
+        hover_image = Image('ink.png', ratio=0.35)
+        hover_image.set_alpha(100)
+        while True:
+            game_icon = pygame.image.load(os.path.join('image', 'game_logo.png'))
+            game_caption = 'Dungeon Tour'
+            pygame.display.set_icon(game_icon)
+            pygame.display.set_caption(game_caption)
+
+            # 设置开始界面
+            width, height = SCREEN_WIDTH, SCREEN_HEIGHT
+
+            Image('bg4.jpg', 0.2).draw(self.screen, width / 2, height / 2)
+            button_died = ButtonText('You have died!', Color.light_grey, 'aajht.ttf', 40)  # 开始游戏按钮
+            button_OK = ButtonText('Restart', Color.light_grey, 'aajht.ttf', 50)  # 开始游戏按钮
+            button_died.draw(self.screen, width / 2, height * 0.4)
+            button_OK.draw(self.screen, width / 2, height * 0.55)
+
+            OK_hover = button_OK.rect.collidepoint(pygame.mouse.get_pos())
+
+            if OK_hover:
+                hover_image.draw(self.screen, width / 2, height * 0.55)
+
+            outline_rect = pygame.Rect(340, 360, 220, 50)
+            pygame.draw.rect(self.screen, Color.light_grey, outline_rect, 1)
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    button_OK.handle_event(self.start_interface)
             pygame.display.update()
 
     def mutefunc(self):
